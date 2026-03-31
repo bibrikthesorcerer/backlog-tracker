@@ -10,11 +10,16 @@ class _Postgres:
     port: str
 
 
+class _Pagination:
+    media_items: int
+
+
 class _Settings:
     POSTGRES: _Postgres
+    PAGINATION: _Pagination
 
 
-settings = cast(_Settings, Dynaconf(
+proj_settings = cast(_Settings, Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=['.secrets.toml'],
 ))

@@ -1,7 +1,7 @@
 from django.db import models 
 from django.contrib.auth import get_user_model
 
-from models_app.models import BaseModel
+from models_app.models import BaseModel, Tag
 
 
 class MediaItem(BaseModel):
@@ -10,26 +10,21 @@ class MediaItem(BaseModel):
     """
 
     class Status(models.TextChoices):
-        WANT = "WAN", "Want"
-        IN_PROGRESS = "PRG", "In Progress"
-        COMPLETED = "CMP", "Completed"
-        DROPPED = "DRP", "Dropped"
+        WANT = "want", "Want"
+        IN_PROGRESS = "in_progress", "In Progress"
+        COMPLETED = "completed", "Completed"
+        DROPPED = "dropped", "Dropped"
 
-    # RATING_CHOICES = [
-    #     (0, "0"), (0.5, "0.5"),
-    #     (1, "1"), (1.5, "1.5"),
-    #     (2, "2"), (2.5, "2.5"),
-    #     (3, "3"), (3.5, "3.5"),
-    #     (4, "4"), (4.5, "4.5"),
-    #     (5, "5"),
-    # ]
     RATING_CHOICES = [(i/2, str(i/2)) for i in range(0, 11)]
     
     class MediaType(models.TextChoices):
-        GAME = "GAM", "Game"
-        BOOK = "BOK", "Book"
-        MUSIC = "MUS", "Music"
-        MOVIE = "MOV", "Movie"
+        GAME = "game", "Game"
+        BOOK = "book", "Book"
+        MUSIC = "music", "Music"
+        MOVIE = "movie", "Movie"
+        TV_SHOW = "series", "TV Show"
+        MANGA = "manga", "Manga"
+        ANIME = "anime", "Anime"
     
     class PriorityLevel(models.IntegerChoices):
         VERY_LOW = 1
@@ -41,19 +36,20 @@ class MediaItem(BaseModel):
     user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
     title = models.CharField(max_length=64)
     status = models.CharField(
-        choices=Status, default=Status.WANT, max_length=16
+        choices=Status, default=Status.WANT, max_length=16, null=True
     )
     rating = models.FloatField(
-        choices=RATING_CHOICES, default=RATING_CHOICES[0], null=True
+        choices=RATING_CHOICES, null=True
     )
     media_type = models.CharField(
-        choices=MediaType
+        choices=MediaType, max_length=16
     )
-    priority = models.IntegerField(choices=PriorityLevel)
+    tags = models.ManyToManyField(to=Tag)
+    priority = models.IntegerField(choices=PriorityLevel, null=True)
     notes = models.TextField(max_length=512, null=True)
     started_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)
-    metadata = models.JSONField()
+    metadata = models.JSONField(null=True)
     external_id = models.IntegerField(null=True)
 
     class Meta:

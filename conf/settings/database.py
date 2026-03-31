@@ -1,12 +1,12 @@
-from config import settings as dc_settings
+from config import proj_settings
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': dc_settings.POSTGRES.name,
-        'USER': dc_settings.POSTGRES.user,
-        'PASSWORD': dc_settings.POSTGRES.password,
-        'HOST': dc_settings.POSTGRES.host,
-        'PORT': dc_settings.POSTGRES.port,
+        'NAME': proj_settings.POSTGRES.name,
+        'USER': proj_settings.POSTGRES.user,
+        'PASSWORD': proj_settings.POSTGRES.password,
+        'HOST': proj_settings.POSTGRES.host,
+        'PORT': proj_settings.POSTGRES.port,
     }
 }

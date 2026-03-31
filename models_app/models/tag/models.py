@@ -1,14 +1,16 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
-from models_app.models import BaseModel, MediaItem
+from models_app.models import BaseModel
 
 
 class Tag(BaseModel):
     """
-    Tag is a model which 
+    Tag can represent certain aspects of MediaItems in a short text form (1-2 word)
     """
+
     title = models.CharField(max_length=64)
-    media_items = models.ManyToManyField(to=MediaItem, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
 
     class Meta:
         db_table = "tag"
