@@ -2,10 +2,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from service_objects.services import ServiceOutcome
+from drf_spectacular.utils import extend_schema
 
 from api.services import CreateMediaItem, ListMediaItems, ShowMediaItem, DeleteMediaItem, UpdateMediaItem
 from api.serializers import ShowMediaItemSerializer, PageSerializer
 from api.permissions import IsOwner
+from api.docs import media_item as MI_docs
 from api.views import BaseView
 
 
@@ -14,6 +16,7 @@ class MediaItemsView(BaseView):
         "POST": [IsAuthenticated]
     }
 
+    @extend_schema(**MI_docs.list_media_items_docs)
     def get(self, request, *args, **kwargs):
         paginated_set = ServiceOutcome(
             ListMediaItems,
@@ -24,6 +27,7 @@ class MediaItemsView(BaseView):
         ).data
         return Response(status=status.HTTP_200_OK, data=data)
 
+    @extend_schema(**MI_docs.create_media_item_docs)
     def post(self, request, *args, **kwargs):
         r = ServiceOutcome(
             CreateMediaItem,
@@ -44,6 +48,7 @@ class SingleMediaItemView(BaseView):
         self.check_object_permissions(self.request, item)
         return item
 
+    @extend_schema(**MI_docs.show_media_item_docs)
     def get(self, request, *args, **kwargs):
         media_item = ServiceOutcome(
             ShowMediaItem,
@@ -52,6 +57,7 @@ class SingleMediaItemView(BaseView):
         data = ShowMediaItemSerializer(media_item).data
         return Response(status=status.HTTP_200_OK, data=data)
 
+    @extend_schema(**MI_docs.update_media_item_docs)
     def patch(self, request, *args, **kwargs):
         item = self._get_item_with_permission_check()
         media_item = ServiceOutcome(
