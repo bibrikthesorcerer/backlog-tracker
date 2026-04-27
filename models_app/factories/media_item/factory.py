@@ -3,6 +3,7 @@ from django.utils import timezone
 from factory import fuzzy, SubFactory
 
 from models_app.factories.user import UserFactory
+from models_app.factories.tag import TagFactory
 from models_app.models import MediaItem
 
 
@@ -16,13 +17,13 @@ class MediaItemFactory(factory.django.DjangoModelFactory):
         choices=[""]+list(MediaItem.Status),
     )
     rating = fuzzy.FuzzyChoice(
-        choices=[""]+[x[0] for x in MediaItem.RATING_CHOICES],
+        choices=[None]+[x[0] for x in MediaItem.RATING_CHOICES],
     )
     media_type = fuzzy.FuzzyChoice(
         choices=MediaItem.MediaType,
     )
     priority = fuzzy.FuzzyChoice(
-        choices=[""]+list(MediaItem.PriorityLevel),
+        choices=[None]+list(MediaItem.PriorityLevel),
     )
     notes = fuzzy.FuzzyText(length=64)
 
@@ -47,3 +48,15 @@ class MediaItemFactory(factory.django.DjangoModelFactory):
             started_at=fuzzy.FuzzyDateTime(start_dt=timezone.now() - timezone.timedelta(weeks=1)),
             finished_at=timezone.now()
         )
+        
+    @factory.post_generation
+    def tags(obj, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for tag in extracted:
+                obj.tags.add(tag)
+        elif kwargs.get("num") is not None:
+            for _ in range(kwargs.get("num")):
+                TagFactory(user=obj.user, media_items=[obj])
