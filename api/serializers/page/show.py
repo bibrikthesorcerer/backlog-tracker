@@ -7,6 +7,7 @@ class PageSerializer(serializers.Serializer):
     per_page = serializers.IntegerField(source='paginator.per_page')
     has_next = serializers.BooleanField()
     has_previous = serializers.BooleanField()
+    total_count = serializers.IntegerField(source='paginator.count')
 
     def __init__(self, objects_serializer: serializers.Serializer, *args, **kwargs):
         super().__init__(*args, **kwargs)
