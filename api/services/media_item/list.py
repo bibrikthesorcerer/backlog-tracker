@@ -1,7 +1,9 @@
 from service_objects.services import ServiceWithResult
+from service_objects.fields import ModelField
 from django.contrib.postgres.search import SearchVector, TrigramSimilarity
 from django.core.paginator import Page, Paginator
-from django.db.models import QuerySet
+from django.contrib.auth import get_user_model
+from django.db.models import QuerySet, Q
 from config import proj_settings
 from django import forms
 
@@ -12,6 +14,8 @@ class ListMediaItems(ServiceWithResult):
     page = forms.IntegerField(required=False)
     per_page = forms.IntegerField(required=False)
     search = forms.CharField(required=False)
+    tag_id = forms.IntegerField(required=False) #TODO: make it a list?
+    user = ModelField(get_user_model())
     
     __fields = [
         "title", "status", "rating",
@@ -32,11 +36,12 @@ class ListMediaItems(ServiceWithResult):
         qs = self._search_for_entry(qs)
         qs = self._prefetch_tags(qs)
         qs = self._select_rel_user(qs)
+        qs = self._apply_filters(qs)
         per_page = self.cleaned_data.get("per_page") or proj_settings.PAGINATION.media_items
         page = self.cleaned_data.get("page")
         return Paginator(qs, per_page).get_page(page)
         
-    def _search_for_entry(self, qs: QuerySet):
+    def _search_for_entry(self, qs: QuerySet) -> QuerySet:
         search_query = self.cleaned_data.get("search")
         if search_query:
             qs = qs.annotate(
@@ -45,16 +50,28 @@ class ListMediaItems(ServiceWithResult):
             ).filter(search=search_query).order_by("-similarity")
         return qs
         
-    def _apply_ordering(self, qs: QuerySet):
+    def _apply_ordering(self, qs: QuerySet) -> QuerySet:
         order = self.cleaned_data.get("order")
         if order:
             qs = qs.order_by(order)
         return qs
 
-    def _prefetch_tags(self, qs: QuerySet):
+    def _prefetch_tags(self, qs: QuerySet) -> QuerySet:
         qs = qs.prefetch_related("tags")        
         return qs
 
-    def _select_rel_user(self, qs: QuerySet):
+    def _select_rel_user(self, qs: QuerySet) -> QuerySet:
         qs = qs.select_related("user")
+        return qs
+
+    def _build_filters(self) -> Q:
+        filters = Q()
+        tag_id = self.cleaned_data.get("tag_id")
+        if tag_id:
+            filters &= Q(tags_in=[tag_id])
+        filters &= Q(user=self.cleaned_data.get("user"))
+        return filters
+
+    def _apply_filters(self, qs: QuerySet) -> QuerySet:
+        qs = qs.filter(self._build_filters())
         return qs

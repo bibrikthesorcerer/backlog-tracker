@@ -12,15 +12,15 @@ from api.views import BaseView
 
 
 class MediaItemsView(BaseView):
-    method_permissions = {
-        "POST": [IsAuthenticated]
-    }
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(**MI_docs.list_media_items_docs)
     def get(self, request, *args, **kwargs):
+        inputs = request.query_params.dict() #NOTE: omits list values. see QueryDict.lists() for more
+        inputs.update({"user": request.user})
         paginated_set = ServiceOutcome(
             ListMediaItems,
-            request.query_params,
+            inputs
         ).result
         data = PageSerializer(
             instance=paginated_set, objects_serializer=ShowMediaItemSerializer
@@ -38,10 +38,7 @@ class MediaItemsView(BaseView):
 
 
 class SingleMediaItemView(BaseView):
-    method_permissions = {
-        "DELETE": [IsOwner],
-        "PATCH": [IsOwner]
-    }
+    permission_classes = [IsOwner]
 
     def _get_item_with_permission_check(self):
         item = ServiceOutcome(ShowMediaItem, self.kwargs).result
@@ -50,10 +47,7 @@ class SingleMediaItemView(BaseView):
 
     @extend_schema(**MI_docs.show_media_item_docs)
     def get(self, request, *args, **kwargs):
-        media_item = ServiceOutcome(
-            ShowMediaItem,
-            kwargs 
-        ).result
+        media_item = self._get_item_with_permission_check()
         data = ShowMediaItemSerializer(media_item).data
         return Response(status=status.HTTP_200_OK, data=data)
 
@@ -69,9 +63,9 @@ class SingleMediaItemView(BaseView):
 
     @extend_schema(**MI_docs.delete_media_item_docs)
     def delete(self, request, *args, **kwargs):
-        self._get_item_with_permission_check()
+        mi = self._get_item_with_permission_check()
         ServiceOutcome(
             DeleteMediaItem,
-            kwargs
+            ({"media_item": mi} | kwargs)
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
