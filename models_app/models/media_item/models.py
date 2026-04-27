@@ -36,23 +36,27 @@ class MediaItem(BaseModel):
     user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
     title = models.CharField(max_length=64)
     status = models.CharField(
-        choices=Status, default=Status.WANT, max_length=16, null=True
+        choices=Status, default=Status.WANT, max_length=16, blank=True
     )
     rating = models.FloatField(
-        choices=RATING_CHOICES, null=True
+        choices=RATING_CHOICES, null=True, blank=True
     )
     media_type = models.CharField(
         choices=MediaType, max_length=16
     )
     tags = models.ManyToManyField(to=Tag)
-    priority = models.IntegerField(choices=PriorityLevel, null=True)
-    notes = models.TextField(max_length=512, null=True)
-    started_at = models.DateTimeField(null=True)
-    finished_at = models.DateTimeField(null=True)
-    metadata = models.JSONField(null=True)
-    external_id = models.IntegerField(null=True)
+    priority = models.IntegerField(choices=PriorityLevel, null=True, blank=True)
+    notes = models.TextField(max_length=512, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(null=True, blank=True)
+    external_id = models.IntegerField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"({self.id}) {self.title}"
 
     class Meta:
+        ordering = ['-updated_at']
         db_table = "media_item"
         verbose_name = "media_item"
         verbose_name_plural = "media_items" 
