@@ -14,7 +14,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     date_joined = fuzzy.FuzzyDateTime(start_dt=timezone.now())
-    password = factory.PostGenerationMethodCall("set_password", "testpass123")
+    # password = factory.PostGenerationMethodCall("set_password", raw_password)
 
     class Params:
         admin = factory.Trait(
@@ -23,3 +23,10 @@ class UserFactory(factory.django.DjangoModelFactory):
         user = factory.Trait(
             is_staff=False, is_superuser=False
         )
+
+    @factory.post_generation
+    def set_pass(self, create, extracted, **kwargs):
+        password = extracted or "testpass123"
+        if password:
+            self.set_password(password)
+            if create: self.save()

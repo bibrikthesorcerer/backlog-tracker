@@ -1,6 +1,6 @@
-from drf_spectacular.utils import OpenApiResponse
-from drf_spectacular.types import OpenApiTypes
-from service_objects_autodocs.auto_parameters_spectacular import prepare_parameters_for_docs 
+from drf_spectacular.utils import OpenApiResponse, inline_serializer
+from rest_framework import serializers
+from service_objects_autodocs.auto_parameters_spectacular import prepare_parameters_for_docs, prepare_request_body_for_docs 
 from service_objects_autodocs.exceptions import (
     get_authentication_failed_yasg_response, get_not_found_error_yasg_response,
     get_yasg_response_with_nested_exception_details, get_validation_error_yasg_response
@@ -26,7 +26,7 @@ list_tags_docs = {
 create_tag_docs = {
     "summary": "Create a Tag on a MediaItem",
     "description": "Creates a Tag with given title for a MediaItem with specified ID. If tag with given title is present, it'll just bind it to MediaItem.",
-    "request": prepare_parameters_for_docs(CreateTag, exclude=("user",)),
+    "request": prepare_request_body_for_docs(CreateTag, exclude=("user",)),
     "responses": {
         "201": OpenApiResponse(
             response=ShowTagSerializer
@@ -64,7 +64,12 @@ delete_tag_docs = {
     "description": "Only Tag's owner can delete it. If a Tag becomes an orphan, it will be deleted from DB.",
     "parameters": prepare_parameters_for_docs(DeleteTag, exclude=("tag", "user",)),
     "responses": {
-        "200": OpenApiResponse({"trulyDeleted": OpenApiTypes.STR}),
+        "200": OpenApiResponse(
+            response=inline_serializer(
+                name="CustomTagDeleteResponse",
+                fields={"trulyDeleted": serializers.BooleanField()},
+            ),
+        ),
         "400": get_validation_error_yasg_response(),
         "401": get_authentication_failed_yasg_response(),
         "403": get_no_ownership_response(),

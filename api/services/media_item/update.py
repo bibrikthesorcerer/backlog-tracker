@@ -20,7 +20,7 @@ class UpdateMediaItem(ServiceWithResult):
         media_item:MediaItem = self.cleaned_data.get("media_item")
         upd_names = []
         for f_name, field in self.declared_fields.items():
-            if f_name is "media_item":
+            if f_name == "media_item":
                 continue
             f_val = self.cleaned_data.get(f_name) or None
             if f_val is not None:

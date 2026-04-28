@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from config import proj_settings
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -8,13 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=h=o25lkc=%sg5g0@4y^g3(1_lekj4nfeplvmdf40nb9!=frpi'
+SECRET_KEY = proj_settings.DJANGO.secret_key
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = proj_settings.DJANGO.debug
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = proj_settings.DJANGO.allowed_hosts
 
+SESSION_COOKIE_SECURE = proj_settings.DJANGO.cookies_secure
 
 # Application definition
 
