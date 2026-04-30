@@ -284,6 +284,21 @@ Django = ">=5.2"
 drf = ["djangorestframework"]
 
 [[package]]
+name = "django-log-request-id"
+version = "2.1.2"
+description = "Django middleware and log filter to attach a unique ID to every log message generated as part of a request"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "django_log_request_id-2.1.2-py3-none-any.whl", hash = "sha256:0819be0f199df16305ab92d9cd47bab9995b1b2f09d267420330638153e69cfe"},
+    {file = "django_log_request_id-2.1.2.tar.gz", hash = "sha256:4fe8e0702b09e8b08676f237d94063e0d54fc4d8867570bea6719ceba0a32486"},
+]
+
+[package.dependencies]
+django = ">=1.8"
+
+[[package]]
 name = "django-rest-framework"
 version = "0.1.0"
 description = "alias."
@@ -1165,4 +1180,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<4.0"
-content-hash = "439fe631619960342cd55e0aa826307c92df0aca81a694185226ac8146e2259c"
+content-hash = "b4a7981ce68842bce06fecad8cc4363af0e00ffaed931b00b5632e8b95aab724"

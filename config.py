@@ -21,10 +21,19 @@ class _Django:
     cookies_secure: bool
 
 
+class _Logging:
+    logging_enabled: bool
+    log_level: str
+    django_log_level: str
+    db_log_level: str
+
+
+
 class _Settings:
     POSTGRES: _Postgres
     PAGINATION: _Pagination
     DJANGO: _Django
+    LOGGING: _Logging
 
 
 proj_settings = cast(_Settings, Dynaconf(

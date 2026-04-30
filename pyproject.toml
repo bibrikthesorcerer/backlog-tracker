@@ -20,6 +20,7 @@ dependencies = [
     "factory-boy (>=3.3.3,<4.0.0)",
     "setuptools (>=82.0.1,<83.0.0)",
     "django-viewflow (>=2.2.15,<3.0.0)",
+    "django-log-request-id (>=2.1.2,<3.0.0)",
 ]
 
 [tool.poetry]
