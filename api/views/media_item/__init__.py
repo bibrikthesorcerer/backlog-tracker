@@ -1,1 +1,1 @@
-from .views import MediaItemsView, SingleMediaItemView
+from .views import MediaItemsView, SingleMediaItemView, MediaItemLifecycleView

@@ -8,6 +8,9 @@ app_name = "api"
 urlpatterns = [
     path('media_items/', views.MediaItemsView.as_view(), name='media_items'),
     path('media_items/<int:id>/', views.SingleMediaItemView.as_view(), name='single_media_item'),
+    path('media_items/<int:id>/start/', views.MediaItemLifecycleView.as_view(action="start"), name='start_media_item'),
+    path('media_items/<int:id>/complete/', views.MediaItemLifecycleView.as_view(action="complete"), name='complete_media_item'),
+    path('media_items/<int:id>/drop/', views.MediaItemLifecycleView.as_view(action="drop"), name='drop_media_item'),
     path('tags/', views.TagsView.as_view(), name='tags'),
     path('tags/<int:id>/', views.SingleTagView.as_view(), name='single_tag'),
     

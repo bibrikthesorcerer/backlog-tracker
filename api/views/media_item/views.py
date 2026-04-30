@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from service_objects.services import ServiceOutcome
 from drf_spectacular.utils import extend_schema
 
-from api.services import CreateMediaItem, ListMediaItems, ShowMediaItem, DeleteMediaItem, UpdateMediaItem
+from api.services import CreateMediaItem, ListMediaItems, ShowMediaItem, DeleteMediaItem, UpdateMediaItem, HandleMediaItemLifecycle
 from api.serializers import ShowMediaItemSerializer, PageSerializer
 from api.permissions import IsOwner
 from api.docs import media_item as MI_docs
@@ -69,3 +69,22 @@ class SingleMediaItemView(BaseView):
             ({"media_item": mi} | kwargs)
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MediaItemLifecycleView(BaseView):
+    permission_classes = [IsOwner]
+    action = None
+
+    def _get_item_with_permission_check(self):
+        item = ServiceOutcome(ShowMediaItem, self.kwargs).result
+        self.check_object_permissions(self.request, item)
+        return item
+
+    @extend_schema(**MI_docs.media_items_lifecycle_docs)
+    def post(self, request, *args, **kwargs):
+        item = self._get_item_with_permission_check()
+        ServiceOutcome(
+            HandleMediaItemLifecycle,
+            {"media_item": item, "action": self.action}
+        )
+        return Response(status=status.HTTP_200_OK)

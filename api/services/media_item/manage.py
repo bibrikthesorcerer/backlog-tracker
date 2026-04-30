@@ -1,8 +1,11 @@
 from service_objects.services import ServiceWithResult
 from service_objects.fields import ModelField
+from service_objects.errors import ValidationError
+from viewflow.fsm import TransitionNotAllowed
 from django import forms
 
 from models_app.models import MediaItem
+from models_app.models.media_item.flows import MediaItemLifecycle
 
 
 class UpdateMediaItem(ServiceWithResult):
@@ -28,4 +31,25 @@ class UpdateMediaItem(ServiceWithResult):
                 upd_names.append(f_name)
         media_item.save(update_fields=upd_names) # db optimization
         self.result = media_item
+        return self
+
+
+class HandleMediaItemLifecycle(ServiceWithResult):
+    media_item = ModelField(MediaItem)
+    ACTIONS = (
+        ("start", ""),
+        ("complete", ""),
+        ("drop", ""),
+    )
+    action = forms.ChoiceField(choices=ACTIONS)
+    
+    def process(self):
+        flow = MediaItemLifecycle(self.cleaned_data.get("media_item"))
+        action_name = self.cleaned_data.get("action")
+        transition_func = getattr(flow, action_name) # get bound method
+        try:
+            transition_func()
+        except TransitionNotAllowed:
+            self.add_error("action", ValidationError(message="This transition on this MediaItem is not allowed"))
+            self.stop_process()
         return self

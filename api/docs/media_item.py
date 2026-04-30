@@ -76,3 +76,23 @@ delete_media_item_docs = {
         "404": get_not_found_error_yasg_response(),
     }
 }
+
+media_items_lifecycle_docs = {
+    "summary": "Work through Media Item statuses",
+    "description": """Media Items have a lifecycle.
+    They start with a `status=WANT` and move to a finish line which is `COMPLETED` or `DROPPED`.
+    Basic lifecycle is `WANT --> IN_PROGRESS` and then either `COMPLETED` or `DROPPED`.
+    There is also option to drop a Media Item which is still in `WANT` status if User decides that this item is no longer interesting.
+    *Only Owner can move item through its lifecycle.*
+    <br>
+    <br>`/start` changes status from `WANT` to `IN_PROGRESS`.
+    <br>`/drop` changes status either from `WANT` or `IN_PROGRESS` to `DROPPED`.
+    <br>`/complete` changes status from `IN_PROGRESS` to `COMPLETED`.
+    """,
+    "responses": {
+        "200": "",
+        "400": get_validation_error_yasg_response(),
+        "401": get_authentication_failed_yasg_response(),
+        "403": get_no_ownership_response(),
+    }
+}
