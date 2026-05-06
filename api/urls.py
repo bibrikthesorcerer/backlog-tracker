@@ -14,6 +14,8 @@ urlpatterns = [
     path('tags/', views.TagsView.as_view(), name='tags'),
     path('tags/<int:id>/', views.SingleTagView.as_view(), name='single_tag'),
     
+    path('queue/', views.MediaItemQueueView.as_view(), name='queue'),
+    
     path('auth/login/', views.LoginView.as_view(), name='login'),
     path('auth/logout/', views.LogoutView.as_view(), name='logout'),
     path('auth/register/', views.RegisterView.as_view(), name='register'),

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from service_objects.services import ServiceOutcome
 from drf_spectacular.utils import extend_schema
 
-from api.services import CreateMediaItem, ListMediaItems, ShowMediaItem, DeleteMediaItem, UpdateMediaItem, HandleMediaItemLifecycle
+from api.services import CreateMediaItem, ListMediaItems, ListMediaItemsQueue, ShowMediaItem, DeleteMediaItem, UpdateMediaItem, HandleMediaItemLifecycle
 from api.serializers import ShowMediaItemSerializer, PageSerializer
 from api.permissions import IsOwner
 from api.docs import media_item as MI_docs
@@ -88,3 +88,16 @@ class MediaItemLifecycleView(BaseView):
             {"media_item": item, "action": self.action}
         )
         return Response(status=status.HTTP_200_OK)
+
+
+class MediaItemQueueView(BaseView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(**MI_docs.media_items_queue_docs)
+    def get(self, request, *args, **kwargs):
+        items = ServiceOutcome(
+           ListMediaItemsQueue,
+           {"user": request.user}
+        ).result
+        data = ShowMediaItemSerializer(items, many=True).data
+        return Response(status=status.HTTP_200_OK, data=data)

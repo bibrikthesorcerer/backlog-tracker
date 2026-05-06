@@ -60,3 +60,11 @@ class MediaItemFactory(factory.django.DjangoModelFactory):
         elif kwargs.get("num") is not None:
             for _ in range(kwargs.get("num")):
                 TagFactory(user=obj.user, media_items=[obj])
+                
+    @factory.post_generation
+    def set_created_at(obj, create, extracted, **kwargs):
+        if not create:
+            return
+        
+        if extracted:
+            obj.created_at = extracted

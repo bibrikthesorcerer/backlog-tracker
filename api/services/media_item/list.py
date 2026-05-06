@@ -3,7 +3,8 @@ from service_objects.fields import ModelField
 from django.contrib.postgres.search import SearchVector, TrigramSimilarity
 from django.core.paginator import Page, Paginator
 from django.contrib.auth import get_user_model
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, F, ExpressionWrapper, FloatField, DurationField
+from django.db.models.functions import Ln, Now, ExtractDay, Cast
 from config import proj_settings
 from django import forms
 
@@ -53,7 +54,7 @@ class ListMediaItems(ServiceWithResult):
     def _apply_ordering(self, qs: QuerySet) -> QuerySet:
         order = self.cleaned_data.get("order")
         if order:
-            qs = qs.order_by(order)
+            qs = qs.order_by(order, "-id")
         return qs
 
     def _prefetch_tags(self, qs: QuerySet) -> QuerySet:
@@ -74,4 +75,43 @@ class ListMediaItems(ServiceWithResult):
 
     def _apply_filters(self, qs: QuerySet) -> QuerySet:
         qs = qs.filter(self._build_filters())
+        return qs
+
+
+class ListMediaItemsQueue(ServiceWithResult):
+    user = ModelField(get_user_model()) 
+    
+    def process(self):
+        qs = MediaItem.objects.all()
+        qs = self._apply_filters(qs)
+        qs = self._select_rel_user(qs)
+        qs = self._prefetch_tags(qs)
+        self.result = self._calc_score(qs)
+        return self
+
+    def _apply_filters(self, qs: QuerySet) -> QuerySet:
+        filters = Q(user=self.cleaned_data.get("user"))
+        filters &= Q(priority__isnull=False)
+        filters &= Q(status=MediaItem.Status.WANT)
+        qs = qs.filter(filters)
+        return qs
+
+    def _select_rel_user(self, qs: QuerySet) -> QuerySet:
+        qs = qs.select_related("user")
+        return qs
+
+    def _prefetch_tags(self, qs: QuerySet) -> QuerySet:
+        qs = qs.prefetch_related("tags")        
+        return qs
+
+    def _calc_score(self, qs: QuerySet) -> QuerySet:
+        days = ExtractDay(ExpressionWrapper(
+            Now() - F("created_at"),
+            output_field=DurationField()
+        ))
+        qs = qs.annotate(score=ExpressionWrapper(
+            F("priority") * 7 + 3/(Ln(Cast(days, FloatField())+2) * 10),
+            output_field=FloatField()
+        ))
+        qs = qs.order_by("-score", "-created_at", "-id")[:proj_settings.PAGINATION.queue_N]
         return qs

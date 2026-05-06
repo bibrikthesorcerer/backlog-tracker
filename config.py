@@ -12,6 +12,7 @@ class _Postgres:
 
 class _Pagination:
     media_items: int
+    queue_N: int
     
 
 class _Django:

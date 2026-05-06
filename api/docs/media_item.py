@@ -96,3 +96,15 @@ media_items_lifecycle_docs = {
         "403": get_no_ownership_response(),
     }
 }
+
+media_items_queue_docs = {
+    "summary": "Get queue of Media Items to consume for a user",
+    "description": """Returns a ranked queue of Media Items for a specific user.
+    Score is affected by user-set `priority` and the days since the item was created.
+    Items with no `priority` and status other than `WANT` are not included in ranking.
+    """,
+    "responses": {
+        "200": ShowMediaItemSerializer(many=True),
+        "401": get_authentication_failed_yasg_response,
+    }
+}
