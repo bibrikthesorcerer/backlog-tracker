@@ -1,1 +1,1 @@
-from .show import ShowMediaItemSerializer
+from .show import ShowMediaItemSerializer, ShowCurationSerializer

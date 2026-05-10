@@ -29,12 +29,27 @@ class _Logging:
     db_log_level: str
 
 
+class _Email:
+    host: str
+    port: int
+    use_tls: bool
+    host_user: str
+    host_password: str
+    default_from_email: str
+
+    
+class _Celery:
+    broker_url: str
+    result_backend: str
+
 
 class _Settings:
     POSTGRES: _Postgres
     PAGINATION: _Pagination
     DJANGO: _Django
     LOGGING: _Logging
+    EMAIL: _Email
+    CELERY: _Celery
 
 
 proj_settings = cast(_Settings, Dynaconf(
