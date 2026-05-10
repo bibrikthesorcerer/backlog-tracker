@@ -12,10 +12,9 @@ from models_app.models import MediaItem
 
 
 class ListMediaItems(ServiceWithResult):
-    page = forms.IntegerField(required=False)
-    per_page = forms.IntegerField(required=False)
     search = forms.CharField(required=False)
     tag_id = forms.IntegerField(required=False) #TODO: make it a list?
+    status =forms.ChoiceField(required=False, choices=MediaItem.Status)
     user = ModelField(get_user_model())
     
     __fields = [
@@ -27,10 +26,10 @@ class ListMediaItems(ServiceWithResult):
     order = forms.ChoiceField(choices=__orderings, required=False)
     
     def process(self):
-        self.result = self._get_paginated_queryset()
+        self.result = self._form_queryset()
         return self
-
-    def _get_paginated_queryset(self) -> Page:
+    
+    def _form_queryset(self) -> QuerySet:
         qs = MediaItem.objects.all()
         # search ordering takes priority over field ordering
         qs = self._apply_ordering(qs)
@@ -38,9 +37,7 @@ class ListMediaItems(ServiceWithResult):
         qs = self._prefetch_tags(qs)
         qs = self._select_rel_user(qs)
         qs = self._apply_filters(qs)
-        per_page = self.cleaned_data.get("per_page") or proj_settings.PAGINATION.media_items
-        page = self.cleaned_data.get("page")
-        return Paginator(qs, per_page).get_page(page)
+        return qs
         
     def _search_for_entry(self, qs: QuerySet) -> QuerySet:
         search_query = self.cleaned_data.get("search")
@@ -67,9 +64,15 @@ class ListMediaItems(ServiceWithResult):
 
     def _build_filters(self) -> Q:
         filters = Q()
+
         tag_id = self.cleaned_data.get("tag_id")
         if tag_id:
             filters &= Q(tags_in=[tag_id])
+        
+        status = self.cleaned_data.get("status") 
+        if status:
+            filters &= Q(status=status)
+
         filters &= Q(user=self.cleaned_data.get("user"))
         return filters
 
@@ -78,31 +81,33 @@ class ListMediaItems(ServiceWithResult):
         return qs
 
 
-class ListMediaItemsQueue(ServiceWithResult):
-    user = ModelField(get_user_model()) 
+class ListMediaItemsWithPagination(ListMediaItems):
+    page = forms.IntegerField(required=False)
+    per_page = forms.IntegerField(required=False)
+
+    def process(self):
+        qs = super().process().result
+        self.result = self._add_pagination_to_qs(qs)
+        return self
+        
+    def _add_pagination_to_qs(self, qs: QuerySet) -> Page:
+        per_page = self.cleaned_data.get("per_page") or proj_settings.PAGINATION.media_items
+        page = self.cleaned_data.get("page")
+        return Paginator(qs, per_page).get_page(page)
+
+
+class ListMediaItemsQueue(ListMediaItems):
     
     def process(self):
-        qs = MediaItem.objects.all()
-        qs = self._apply_filters(qs)
-        qs = self._select_rel_user(qs)
-        qs = self._prefetch_tags(qs)
+        qs = super().process().result
         self.result = self._calc_score(qs)
         return self
 
-    def _apply_filters(self, qs: QuerySet) -> QuerySet:
-        filters = Q(user=self.cleaned_data.get("user"))
+    def _build_filters(self) -> Q:
+        filters = super()._build_filters()
         filters &= Q(priority__isnull=False)
         filters &= Q(status=MediaItem.Status.WANT)
-        qs = qs.filter(filters)
-        return qs
-
-    def _select_rel_user(self, qs: QuerySet) -> QuerySet:
-        qs = qs.select_related("user")
-        return qs
-
-    def _prefetch_tags(self, qs: QuerySet) -> QuerySet:
-        qs = qs.prefetch_related("tags")        
-        return qs
+        return filters
 
     def _calc_score(self, qs: QuerySet) -> QuerySet:
         days = ExtractDay(ExpressionWrapper(

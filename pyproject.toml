@@ -21,6 +21,7 @@ dependencies = [
     "setuptools (>=82.0.1,<83.0.0)",
     "django-viewflow (>=2.2.15,<3.0.0)",
     "django-log-request-id (>=2.1.2,<3.0.0)",
+    "redis (>=7.4.0,<8.0.0)",
 ]
 
 [tool.poetry]
@@ -33,5 +34,6 @@ build-backend = "poetry.core.masonry.api"
 [dependency-groups]
 dev = [
     "pylint (>=4.0.5,<5.0.0)",
-    "pylint-django (>=2.7.0,<3.0.0)"
+    "pylint-django (>=2.7.0,<3.0.0)",
+    "aiosmtpd (>=1.4.6,<2.0.0)"
 ]

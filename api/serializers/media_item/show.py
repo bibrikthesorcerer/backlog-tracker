@@ -11,3 +11,7 @@ class ShowMediaItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MediaItem 
         exclude = ["external_id", "user"]
+        
+class ShowCurationSerializer(serializers.Serializer):
+    queue = ShowMediaItemSerializer(many=True)
+    started = ShowMediaItemSerializer(many=True)

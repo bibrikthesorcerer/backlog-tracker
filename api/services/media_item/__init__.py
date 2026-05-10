@@ -1,5 +1,5 @@
 from .create import CreateMediaItem
-from .list import ListMediaItems, ListMediaItemsQueue
+from .list import ListMediaItems, ListMediaItemsQueue, ListMediaItemsWithPagination
 from .show import ShowMediaItem
 from .delete import DeleteMediaItem
-from .manage import UpdateMediaItem, HandleMediaItemLifecycle
+from .manage import UpdateMediaItem, HandleMediaItemLifecycle, SendCurationEMail

@@ -4,7 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from service_objects.services import ServiceOutcome
 from drf_spectacular.utils import extend_schema
 
-from api.services import CreateMediaItem, ListMediaItems, ListMediaItemsQueue, ShowMediaItem, DeleteMediaItem, UpdateMediaItem, HandleMediaItemLifecycle
+from api.services import (
+    CreateMediaItem,
+    ListMediaItemsWithPagination, ListMediaItemsQueue,
+    ShowMediaItem, DeleteMediaItem,
+    UpdateMediaItem, HandleMediaItemLifecycle
+)
 from api.serializers import ShowMediaItemSerializer, PageSerializer
 from api.permissions import IsOwner
 from api.docs import media_item as MI_docs
@@ -19,7 +24,7 @@ class MediaItemsView(BaseView):
         inputs = request.query_params.dict() #NOTE: omits list values. see QueryDict.lists() for more
         inputs.update({"user": request.user})
         paginated_set = ServiceOutcome(
-            ListMediaItems,
+            ListMediaItemsWithPagination,
             inputs
         ).result
         data = PageSerializer(

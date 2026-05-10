@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     "drf_spectacular",
     'models_app',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -96,3 +97,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = proj_settings.EMAIL.host
+EMAIL_PORT = proj_settings.EMAIL.port
+EMAIL_USE_TLS = proj_settings.EMAIL.use_tls
+EMAIL_HOST_USER = proj_settings.EMAIL.host_user
+EMAIL_HOST_PASSWORD = proj_settings.EMAIL.host_password
+DEFAULT_FROM_EMAIL = proj_settings.EMAIL.default_from_email

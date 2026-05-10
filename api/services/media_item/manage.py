@@ -1,9 +1,16 @@
-from service_objects.services import ServiceWithResult
+import json
+
+from service_objects.services import ServiceOutcome, ServiceWithResult
 from service_objects.fields import ModelField
 from service_objects.errors import ValidationError
 from viewflow.fsm import TransitionNotAllowed
+from django.contrib.auth import get_user_model
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django import forms
 
+from api.services.media_item.list import ListMediaItems, ListMediaItemsQueue
+from api.serializers import ShowCurationSerializer
 from models_app.models import MediaItem
 from models_app.models.media_item.flows import MediaItemLifecycle
 
@@ -52,4 +59,37 @@ class HandleMediaItemLifecycle(ServiceWithResult):
         except TransitionNotAllowed:
             self.add_error("action", ValidationError(message="This transition on this MediaItem is not allowed"))
             self.stop_process()
+        return self
+
+
+class SendCurationEMail(ServiceWithResult):
+    user = ModelField(get_user_model()) 
+
+    def process(self):
+        # get items
+        user = self.cleaned_data.get("user")
+        queue = ServiceOutcome(
+            ListMediaItemsQueue,
+            {"user": user}
+        ).result
+        started = ServiceOutcome(
+            ListMediaItems,
+            {"user": user, "status": MediaItem.Status.IN_PROGRESS}
+        ).result
+        
+        data = {"queue": queue, "started": started}
+
+        serialized = ShowCurationSerializer(data).data
+        text_content = json.dumps(serialized, indent=4, ensure_ascii=False)
+
+        data.update({"username": user.username})
+        html_content = render_to_string("api/curation.html", data)
+        msg = EmailMultiAlternatives(
+            subject="Your daily curation from Backlog",
+            body=text_content,
+            to=[user.email]
+        )
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+        self.result = msg
         return self
