@@ -1,0 +1,12 @@
+[Unit]
+Description=gunicorn daemon for {{ project_name }}
+After=network.target
+
+[Service]
+User={{ project_name }}
+Group=www-data
+WorkingDirectory={{ curr_dir }}
+ExecStart={{ curr_dir }}/.venv/bin/gunicorn -c gunicorn_config.py conf.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

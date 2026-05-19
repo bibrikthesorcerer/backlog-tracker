@@ -1,0 +1,83 @@
+---
+- name: Install and configure local PostgreSQL
+  block:
+    - name: Load PostgreSQL secrets
+      ansible.builtin.include_vars:
+        file: vault/postgres_password.yml
+
+    - name: Install PostgreSQL and dependencies
+      ansible.builtin.apt:
+        pkg:
+          - postgresql
+          - postgresql-client
+          - python3-psycopg
+
+    - name: Ensure PostgreSQL service is started and enabled
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+      become: true
+
+    - name: Set postgres password
+      ansible.builtin.shell: >
+        sudo -u postgres psql -c
+        "ALTER USER postgres PASSWORD '{{ postgres_admin_password }}';"
+      become: true
+      become_user: root
+      changed_when: false
+
+    - name: Create application DB user
+      community.postgresql.postgresql_user:
+        name: "{{ postgres_user }}"
+        password: "{{ postgres_password }}"
+        role_attr_flags: LOGIN
+        login_host: 127.0.0.1
+        login_user: postgres
+        login_password: "{{ postgres_admin_password }}"
+
+    - name: Create project DB
+      community.postgresql.postgresql_db:
+        name: "{{ postgres_name }}"
+        owner: "{{ postgres_user }}"
+        state: present
+        login_host: 127.0.0.1
+        login_user: postgres
+        login_password: "{{ postgres_admin_password }}"
+
+    - name: Grant all privileges to "{{ postgres_user }}"
+      community.postgresql.postgresql_privs:
+        login_db: "{{ postgres_name }}"
+        role: "{{ postgres_user }}"
+        state: present
+        privs: ALL
+        objs: ALL_IN_SCHEMA
+        login_host: 127.0.0.1
+        login_user: postgres
+        login_password: "{{ postgres_admin_password }}"
+
+    - name: Get hba file location # noqa: var-naming[no-role-prefix]
+      community.postgresql.postgresql_query:
+        query: SHOW hba_file;
+        login_host: 127.0.0.1
+        login_user: postgres
+        login_password: "{{ postgres_admin_password }}"
+      register: hba_file
+
+    - name: Grant user connection to DB from localhost
+      community.postgresql.postgresql_pg_hba:
+        dest: "{{ hba_file.query_result[0].hba_file }}"
+        contype: host
+        databases: "{{ postgres_name }}"
+        users: "{{ postgres_user }}"
+        source: 127.0.0.1/32
+        method: trust
+      become: true
+      become_user: root
+
+    - name: Restart PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+      become: true
+      become_user: root

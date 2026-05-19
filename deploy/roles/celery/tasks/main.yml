@@ -1,0 +1,42 @@
+---
+- name: Configure celery
+  vars:
+    curr_dir: /var/www/{{ project_name }}/ss/current
+    shared_dir: /var/www/{{ project_name }}/ss/shared
+  block:
+    - name: Create runtime directory for Celery Beat schedule
+      ansible.builtin.file:
+        path: /run/celery
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0755"
+      become: true
+      become_user: root
+
+    - name: Configure Celery systemd services
+      ansible.builtin.template:
+        src: "celery-{{ item }}.service.j2"
+        dest: "/etc/systemd/system/celery-{{ project_name }}-{{ item }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      become_user: root
+      loop:
+        - worker
+        - beat
+      notify: Reload systemd
+
+    - name: Flush handlers so systemd knows about new service
+      ansible.builtin.meta: flush_handlers
+
+    - name: Ensure Celery services are enabled and started
+      ansible.builtin.systemd:
+        name: "celery-{{ project_name }}-{{ item }}"
+        state: started
+        enabled: true
+      become: true
+      loop:
+        - worker
+        - beat

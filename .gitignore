@@ -7,3 +7,7 @@ debug.py
 /logs
 
 celerybeat-schedule*
+
+# Ansible
+deploy/inventory.ini
+deploy/vault

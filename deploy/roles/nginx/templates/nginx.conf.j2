@@ -1,0 +1,74 @@
+# Define the backend using Gunicorn Unix socket
+upstream {{ project_name }}_backend {
+    server unix:{{ curr_dir }}/app.sock;
+}
+
+server {
+    server_name {{ nginx_server_name }};
+
+    # General settings
+    keepalive_timeout 5;
+    access_log /var/log/nginx/somebody.access.log;
+    error_log /var/log/nginx/somebody.error.log;
+
+    # Proxy headers for Gunicorn so Django can use them
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; # client IP, but may be a proxy chain
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Real-IP $remote_addr; # real client IP
+    proxy_set_header Host $host;
+    proxy_set_header X-Request-Start "t=${msec}";
+
+    proxy_redirect off; # django knows real host via headers
+    proxy_read_timeout 300; # 5 mins for backend to response
+
+    # Deny access to hidden files
+    location ~ /\.(?!well-known).* {
+        deny all;
+        access_log off;
+        log_not_found off;
+        return 404;
+    }
+
+    # Serve static files from current release
+    location ^~ /static/ {
+        root {{ curr_dir }};
+        access_log off;
+    }
+
+    # API
+    location /api/ {
+        include proxy_params;
+        proxy_pass http://{{ project_name }}_backend;
+    }
+
+    # Django admin
+    location /admin/ {
+        include proxy_params;
+        proxy_pass http://{{ project_name }}_backend;
+    }
+
+    # Swagger docs
+    location /swagger/ {
+        include proxy_params;
+        proxy_pass http://{{ project_name }}_backend;
+    }
+
+    location /redoc/ {
+        include proxy_params;
+        proxy_pass http://{{ project_name }}_backend;
+    }
+
+    # Reject everything else
+    location / {
+        return 404;
+    }
+
+    # Serve static files by extension
+    location ~* \.(?:css|js|jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm)$ {
+        root {{ curr_dir }}/public;
+        access_log off;
+        expires 30d;  # Cache static files for 30 days
+        add_header Cache-Control "public";
+    }
+}
