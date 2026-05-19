@@ -1,0 +1,12 @@
+---
+- name: Install redis package
+  ansible.builtin.apt:
+    pkg:
+      - redis
+
+- name: Ensure redis service started and enabled
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    enabled: true
+  become: true

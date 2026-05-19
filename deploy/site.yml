@@ -1,0 +1,36 @@
+---
+- name: Configure webservers
+  hosts: all
+  vars:
+    project_name: "{{ project }}"
+    user: "{{ project }}"
+
+  tasks:
+    - name: Base system setup
+      ansible.builtin.include_role:
+        name: base
+
+    - name: Assign project-specific roles
+      become: true
+      become_user: "{{ elevated_user }}"
+      block:
+        - name: Install and configure PostgreSQL
+          ansible.builtin.include_role:
+            name: postgres
+          when: use_local_postgres | default(true)
+
+        - name: Deploy Django App (with Poetry)
+          ansible.builtin.include_role:
+            name: django_app
+
+        - name: Setup Redis
+          ansible.builtin.include_role:
+            name: redis
+
+        - name: Setup Celery Workers and Beat
+          ansible.builtin.include_role:
+            name: celery
+
+        - name: Configure Nginx
+          ansible.builtin.include_role:
+            name: nginx

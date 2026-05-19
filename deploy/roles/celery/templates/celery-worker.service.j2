@@ -1,0 +1,15 @@
+[Unit]
+Description=Celery Worker for {{ project_name }}
+After=network.target redis.service
+Requires=redis.service
+
+[Service]
+Type=simple
+User={{ user }}
+Group={{ user }}
+WorkingDirectory={{ curr_dir }}
+ExecStart={{ curr_dir }}/.venv/bin/celery -A conf worker --loglevel=info
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

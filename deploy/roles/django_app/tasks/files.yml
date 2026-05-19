@@ -1,0 +1,100 @@
+---
+- name: Copy project source files
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../."
+    dest: "{{ tmp_dir }}"
+    rsync_opts:
+      - "--exclude=.*"
+      - "--exclude=gunicorn_config.py"
+      - "--exclude=logs/***"
+      - "--exclude=deploy/***" # everything in dir deploy
+
+- name: Ensure .secrets.toml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../.secrets.toml"
+    dest: "{{ shared_dir }}/.secrets.toml"
+    mode: "0600"
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Make symlink for .secrets.toml
+  ansible.builtin.file:
+    src: "{{ shared_dir }}/.secrets.toml"
+    dest: "{{ tmp_dir }}/.secrets.toml"
+    state: link
+    force: true
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Ensure shared logs
+  ansible.builtin.file:
+    path: "{{ shared_dir }}/logs"
+    state: directory
+    mode: "0755"
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Make symlink for logs
+  ansible.builtin.file:
+    src: "{{ shared_dir }}/logs"
+    dest: "{{ tmp_dir }}/logs"
+    state: link
+    force: true
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Update current release symlink
+  ansible.builtin.file:
+    path: "{{ curr_dir }}"
+    src: "{{ tmp_dir }}"
+    state: link
+    force: true
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Delete previous deployments
+  block:
+    - name: Get Current deployment path # noqa: var-naming[no-role-prefix]
+      ansible.builtin.command: readlink -f {{ curr_dir }}
+      register: current_deploy_path
+      changed_when: false
+
+    - name: Find all releases # noqa: var-naming[no-role-prefix]
+      ansible.builtin.find:
+        paths: "{{ releases_dir }}"
+        file_type: directory
+      register: old_releases
+      changed_when: false
+
+    - name: Remove old deployments
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ old_releases.files }}"
+      when:
+        - item.path != current_deploy_path.stdout
+
+- name: Ensure .secrets.toml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../.secrets.toml"
+    dest: "{{ shared_dir }}/.secrets.toml"
+    mode: "0600"
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Ensure .secrets.toml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../gunicorn_config.py"
+    dest: "{{ shared_dir }}/gunicorn_config.py"
+    mode: "0644"
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"
+
+- name: Make symlink for gunicorn_config
+  ansible.builtin.file:
+    src: "{{ shared_dir }}/gunicorn_config.py"
+    dest: "{{ tmp_dir }}/gunicorn_config.py"
+    state: link
+    force: true
+    owner: "{{ project_name }}"
+    group: "{{ project_name }}"

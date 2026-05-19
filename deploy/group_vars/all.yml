@@ -1,0 +1,6 @@
+---
+use_local_postgres: true
+
+project: "backlog"
+elevated_user: "superman"
+ssh_key_path: ""

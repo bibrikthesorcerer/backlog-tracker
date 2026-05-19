@@ -1,0 +1,124 @@
+---
+- name: Manage users
+  become: true
+  vars:
+    actions:
+      - start
+      - enable
+      - restart
+    services:
+      - "celery-{{ project_name }}"
+      - "gunicorn-{{ project_name }}"
+    users:
+      - "{{ project_name }}"
+      - "{{ elevated_user }}"
+  block:
+    - name: Configure user '{{ project_name }}'
+      block:
+        - name: Add the user '{{ project_name }}'
+          ansible.builtin.user:
+            name: "{{ project_name }}"
+            state: present
+            shell: /bin/bash
+            groups:
+              - www-data
+            append: true
+            create_home: true
+
+        - name: Generate systemctl commands alias # noqa: var-naming[no-role-prefix]
+          # cartesian product of actions X services
+          # join each product into string with space between
+          # prepend /bin/systemctl
+          # join all strings with ', '
+          ansible.builtin.set_fact:
+            systemctl_alias: >-
+              {{
+                actions
+                | product(services)
+                | map('join', ' ')
+                | map('regex_replace', '^(.*)$', '/bin/systemctl \1')
+                | join(', ')
+              }}
+
+        - name: Set NOPASSWD for user '{{ project_name }}'
+          ansible.builtin.copy:
+            dest: "/etc/sudoers.d/{{ project_name }}"
+            content: |
+              Cmnd_Alias SRV_{{ project_name | upper | replace('-', '_') }} = {{ systemctl_alias }}
+              {{ project_name }} ALL=(ALL) NOPASSWD: SRV_{{ project_name | upper | replace('-', '_') }}
+            owner: root
+            group: root
+            mode: "0440"
+            validate: "visudo -cf %s"
+
+    - name: Configure user '{{ elevated_user }}'
+      block:
+        - name: Add the user '{{ elevated_user }}'
+          ansible.builtin.user:
+            name: "{{ elevated_user }}"
+            state: present
+            shell: /bin/bash
+            create_home: true
+            groups: sudo
+            append: true
+
+        - name: Set NOPASSWD for user '{{ elevated_user }}'
+          ansible.builtin.copy:
+            dest: "/etc/sudoers.d/{{ elevated_user }}"
+            content: "{{ elevated_user }} ALL=(ALL) NOPASSWD: ALL"
+            owner: root
+            group: root
+            mode: "0440"
+            validate: visudo -cf %s
+
+    - name: Add SSH public key to authorized_keys
+      ansible.posix.authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "{{ lookup('file', ssh_key_path) }}"
+        manage_dir: true
+      loop: "{{ users }}"
+
+- name: Configure project directories
+  become: true
+  block:
+    - name: Create releases directory
+      ansible.builtin.file:
+        path: /var/www/{{ project_name }}/ss/releases/0/public
+        state: directory
+        mode: "0755"
+        owner: "{{ project_name }}"
+        group: "{{ project_name }}"
+
+    - name: Create shared directory
+      ansible.builtin.file:
+        path: /var/www/{{ project_name }}/ss/shared
+        state: directory
+        mode: "0755"
+        owner: "{{ project_name }}"
+        group: "{{ project_name }}"
+
+    - name: Create symlink to current release
+      ansible.builtin.file:
+        src: /var/www/{{ project_name }}/ss/releases/0/public
+        dest: /var/www/{{ project_name }}/ss/current
+        state: link
+        owner: "{{ project_name }}"
+        group: "{{ project_name }}"
+
+    - name: Set project folders ownership
+      ansible.builtin.file:
+        path: /var/www/{{ project_name }}
+        owner: "{{ project_name }}"
+        group: "{{ project_name }}"
+        recurse: true
+
+- name: Install python apt lib
+  ansible.builtin.package:
+    name: python3-apt
+    state: present
+
+- name: Update cache if its older than 1h
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600

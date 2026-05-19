@@ -1,0 +1,63 @@
+---
+- name: Install pipx
+  ansible.builtin.apt:
+    name: pipx
+    state: present
+  become: true
+  become_user: root
+
+- name: Install python-is-python3
+  ansible.builtin.apt:
+    name: python-is-python3
+    state: present
+  become: true
+  become_user: root
+
+- name: Install python3-venv
+  ansible.builtin.apt:
+    name: python3-venv
+    state: present
+  become: true
+  become_user: root
+
+- name: Move project and set it up for launch
+  vars:
+    shared_dir: /var/www/{{ project_name }}/ss/shared
+    releases_dir: /var/www/{{ project_name }}/ss/releases
+    curr_dir: /var/www/{{ project_name }}/ss/current
+    # tmp_dir: "{{ releases_dir }}/{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}"
+    tmp_dir: "{{ releases_dir }}/{{ ansible_date_time.date }}"
+  block:
+    - name: Project setup
+      become: true
+      become_user: "{{ project_name }}"
+      block:
+        - name: Copy project and setup directories
+          ansible.builtin.import_tasks: files.yml
+
+        - name: Setup dependencies using poetry
+          ansible.builtin.import_tasks: poetry.yml
+
+        - name: Check DB migrations # noqa: var-naming[no-role-prefix]
+          ansible.builtin.command: "{{ venv_path }}/bin/python manage.py migrate --check"
+          register: migration_check
+          changed_when: false
+          failed_when: false
+          args:
+            chdir: "{{ tmp_dir }}"
+
+        - name: Run DB migrations
+          ansible.builtin.command: "{{ venv_path }}/bin/python manage.py migrate"
+          args:
+            chdir: "{{ tmp_dir }}"
+          changed_when: migration_check.rc != 0
+
+        - name: Normalize dir ownership
+          ansible.builtin.file:
+            path: /var/www/{{ project_name }}
+            owner: "{{ project_name }}"
+            group: "{{ project_name }}"
+            recurse: true
+
+    - name: Setup gunicorn web-server
+      ansible.builtin.import_tasks: gunicorn_setup.yml

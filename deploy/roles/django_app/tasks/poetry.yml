@@ -1,0 +1,60 @@
+---
+- name: Install Poetry via pipx
+  become: true
+  become_user: "{{ project_name }}"
+  ansible.builtin.command:
+    cmd: pipx install poetry
+    creates: /home/{{ project_name }}/.local/bin/poetry
+
+- name: Ensure shared directories exist
+  become: true
+  become_user: "{{ project_name }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ shared_dir }}/venvs"
+    - "/home/{{ project_name }}/.cache/pip"
+    - "/home/{{ project_name }}/.cache/pypoetry"
+
+- name: Compute poetry.lock hash # noqa: var-naming[no-role-prefix]
+  ansible.builtin.stat:
+    path: "{{ tmp_dir }}/poetry.lock"
+    checksum_algorithm: sha256
+  register: poetry_lock
+
+- name: Define venv path # noqa: var-naming[no-role-prefix]
+  ansible.builtin.set_fact:
+    venv_name: "py311-{{ poetry_lock.stat.checksum[:12] }}"
+    venv_path: "{{ shared_dir }}/venvs/py311-{{ poetry_lock.stat.checksum[:12] }}"
+
+- name: Create immutable venv
+  become: true
+  become_user: "{{ project_name }}"
+  ansible.builtin.command:
+    cmd: python -m venv {{ venv_path }}
+    creates: "{{ venv_path }}/bin/python"
+
+- name: Install dependencies into immutable venv
+  become: true
+  become_user: "{{ project_name }}"
+  ansible.builtin.shell: |
+    source "{{ venv_path }}/bin/activate"
+
+    /home/{{ project_name }}/.local/bin/poetry install --no-interaction --without dev
+  args:
+    chdir: "{{ tmp_dir }}"
+    executable: /bin/bash
+  environment:
+    POETRY_VIRTUALENVS_CREATE: "false"
+    PIP_CACHE_DIR: "/home/{{ project_name }}/.cache/pip"
+    POETRY_CACHE_DIR: "/home/{{ project_name }}/.cache/pypoetry"
+
+- name: Symlink release venv
+  become: true
+  become_user: "{{ project_name }}"
+  ansible.builtin.file:
+    src: "{{ venv_path }}"
+    dest: "{{ tmp_dir }}/.venv"
+    state: link

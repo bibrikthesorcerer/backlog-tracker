@@ -1,0 +1,40 @@
+---
+- name: Install and configure Nginx
+  vars:
+    curr_dir: /var/www/{{ project_name }}/ss/current
+  block:
+    - name: Install Nginx package
+      ansible.builtin.apt:
+        pkg:
+          - nginx
+
+    - name: Create .conf file from template
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/{{ project_name }}.conf
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      become_user: root
+
+    - name: Create symlink to sites-enabled
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/{{ project_name }}.conf
+        dest: /etc/nginx/sites-enabled/{{ project_name }}.conf
+        state: link
+        force: true
+      become: true
+      become_user: root
+
+    - name: Remove default nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Start and enable nginx service
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: true
+      become: true
