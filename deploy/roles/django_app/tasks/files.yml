@@ -5,9 +5,11 @@
     dest: "{{ tmp_dir }}"
     rsync_opts:
       - "--exclude=.*"
-      - "--exclude=gunicorn_config.py"
+      - "--exclude=gunicorn_config*"
       - "--exclude=logs/***"
       - "--exclude=deploy/***" # everything in dir deploy
+      - "--exclude=compose.yml"
+      - "--exclude=startup.py"
 
 - name: Ensure .secrets.toml
   ansible.builtin.copy:
@@ -82,9 +84,9 @@
     owner: "{{ project_name }}"
     group: "{{ project_name }}"
 
-- name: Ensure .secrets.toml
+- name: Ensure gunicorn_config_vm.py
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../gunicorn_config.py"
+    src: "{{ playbook_dir }}/../gunicorn_config_vm.py"
     dest: "{{ shared_dir }}/gunicorn_config.py"
     mode: "0644"
     owner: "{{ project_name }}"

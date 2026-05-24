@@ -53,9 +53,6 @@ class _Settings:
 
 
 proj_settings = cast(_Settings, Dynaconf(
-    envvar_prefix="DYNACONF",
+    envvar_prefix="BACKLOG",
     settings_files=['.secrets.toml'],
 ))
-
-# `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
-# `settings_files` = Load these files in the order.
