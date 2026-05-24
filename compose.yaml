@@ -1,0 +1,66 @@
+# yaml anchor to reuse for gunicorn and celery
+x-app-base: &backlog-app-base
+  image: bibrikthesorcerer/backlog-tracker
+  environment:
+    DB_CONN_MAX_RETRIES: 5
+    BACKLOG_POSTGRES__NAME: backlog
+    BACKLOG_POSTGRES__USER: backlog
+    BACKLOG_POSTGRES__PASSWORD: ${POSTGRES_PASSWORD}
+    BACKLOG_POSTGRES__HOST: postgres
+    BACKLOG_POSTGRES__PORT: 5432
+    BACKLOG_CELERY__BROKER_URL: "redis://redis:6379/0"
+    BACKLOG_CELERY__RESULT_BACKEND: "redis://redis:6379/1"
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+  working_dir: /app
+  volumes:
+    - ./.secrets.toml:/app/.secrets.toml:ro
+  restart: unless-stopped
+
+services:
+    
+  web:
+    <<: *backlog-app-base
+    ports:
+    - "6855:8000"
+
+  worker:
+    <<: *backlog-app-base
+    command: ["celery", "-A", "conf", "worker", "-l", "info"]
+
+  beat:
+    <<: *backlog-app-base
+    command: ["celery", "-A", "conf", "beat", "-l", "info"]
+
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: backlog
+      POSTGRES_USER: backlog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGUSER: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backlog -d backlog"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
