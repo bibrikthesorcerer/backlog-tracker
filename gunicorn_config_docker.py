@@ -39,3 +39,6 @@ preload_app = False
 
 # docker performance magic
 worker_tmp_dir = "/dev/shm"
+
+# control socket not needed
+control_socket_disable = True
