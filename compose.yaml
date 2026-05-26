@@ -3,13 +3,14 @@ x-app-base: &backlog-app-base
   image: bibrikthesorcerer/backlog-tracker
   environment:
     DB_CONN_MAX_RETRIES: 5
-    BACKLOG_POSTGRES__NAME: backlog
-    BACKLOG_POSTGRES__USER: backlog
-    BACKLOG_POSTGRES__PASSWORD: ${POSTGRES_PASSWORD}
-    BACKLOG_POSTGRES__HOST: postgres
-    BACKLOG_POSTGRES__PORT: 5432
-    BACKLOG_CELERY__BROKER_URL: "redis://redis:6379/0"
-    BACKLOG_CELERY__RESULT_BACKEND: "redis://redis:6379/1"
+    BL_POSTGRES__NAME: backlog
+    BL_POSTGRES__USER: backlog
+    BL_POSTGRES__PASSWORD: ${POSTGRES_PASSWORD}
+    BL_POSTGRES__HOST: postgres
+    BL_POSTGRES__PORT: 5432
+    BL_CELERY__BROKER_URL: "redis://redis:6379/0"
+    BL_CELERY__RESULT_BACKEND: "redis://redis:6379/1"
+    BL_MODE: ${BL_MODE:-development}
   depends_on:
     redis:
       condition: service_healthy
@@ -21,19 +22,18 @@ x-app-base: &backlog-app-base
   restart: unless-stopped
 
 services:
-    
   web:
     <<: *backlog-app-base
     ports:
-    - "6855:8000"
+      - "6855:8000"
 
   worker:
     <<: *backlog-app-base
-    command: ["celery", "-A", "conf", "worker", "-l", "info"]
+    command: ["python", "-m", "celery", "-A", "conf", "worker", "-l", "info"]
 
   beat:
     <<: *backlog-app-base
-    command: ["celery", "-A", "conf", "beat", "-l", "info"]
+    command: ["python", "-m", "celery", "-A", "conf", "beat", "-l", "info", "-s", "/var/run/celery/celerybeat-schedule"]
 
   redis:
     image: redis:8-alpine
