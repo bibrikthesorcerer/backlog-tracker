@@ -43,8 +43,10 @@ log.info("Migrations applied.")
 # run gunicorn
 log.info("Starting gunicorn...")
 os.execvp(
-    "gunicorn",
+    "python",
     [
+        "python",
+        "-m",
         "gunicorn",
         "-c",
         "gunicorn_config_docker.py",
