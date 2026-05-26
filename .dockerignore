@@ -1,0 +1,29 @@
+# Documents
+*.md
+
+# Secrets
+.env
+.secrets.toml
+.vault_pass
+
+# Version control
+.git
+.gitignore
+
+# IDE files
+.vscode
+
+# Project artifacts
+.venv
+__pycache__
+logs
+celerybeat-schedule*
+
+# Ansible directories
+.ansible
+deploy
+
+# Docker-related files
+Dockerfile*
+.dockerignore
+compose.yaml

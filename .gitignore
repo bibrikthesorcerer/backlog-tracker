@@ -1,13 +1,19 @@
-.*
+# Secrets
+.env
+.secrets.toml
+.vault_pass
+
+# IDE files
+.vscode 
+
+# Project artifacts
+.venv
 __pycache__
-# Ignore dynaconf secret files
-.secrets.*
-
-debug.py
-/logs
-
+logs
 celerybeat-schedule*
+settings.local.toml
 
-# Ansible
+# Ansible-related
+.ansible
 deploy/inventory.ini
 deploy/vault

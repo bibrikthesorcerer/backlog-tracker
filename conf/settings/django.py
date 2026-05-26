@@ -10,14 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = proj_settings.DJANGO.secret_key
+SECRET_KEY = proj_settings.get("DJANGO.secret_key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = proj_settings.DJANGO.debug
+DEBUG = proj_settings.get("DJANGO.debug")
 
-ALLOWED_HOSTS = proj_settings.DJANGO.allowed_hosts
+ALLOWED_HOSTS = proj_settings.get("DJANGO.allowed_hosts", cast=list)
 
-SESSION_COOKIE_SECURE = proj_settings.DJANGO.cookies_secure
+SESSION_COOKIE_SECURE = proj_settings.get("DJANGO.cookies_secure")
 
 # Application definition
 
@@ -100,9 +100,9 @@ STATIC_URL = '/static/'
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = proj_settings.EMAIL.host
-EMAIL_PORT = proj_settings.EMAIL.port
-EMAIL_USE_TLS = proj_settings.EMAIL.use_tls
-EMAIL_HOST_USER = proj_settings.EMAIL.host_user
-EMAIL_HOST_PASSWORD = proj_settings.EMAIL.host_password
-DEFAULT_FROM_EMAIL = proj_settings.EMAIL.default_from_email
+EMAIL_HOST = proj_settings.get("EMAIL.host", "localhost")
+EMAIL_PORT = proj_settings.get("EMAIL.port", 8025)
+EMAIL_USE_TLS = proj_settings.get("EMAIL.use_tls", False)
+EMAIL_HOST_USER = proj_settings.get("EMAIL.host_user")
+EMAIL_HOST_PASSWORD = proj_settings.get("EMAIL.host_password")
+DEFAULT_FROM_EMAIL = proj_settings.get("EMAIL.default_from_email", "from@backlog.co")

@@ -91,7 +91,7 @@ class ListMediaItemsWithPagination(ListMediaItems):
         return self
         
     def _add_pagination_to_qs(self, qs: QuerySet) -> Page:
-        per_page = self.cleaned_data.get("per_page") or proj_settings.PAGINATION.media_items
+        per_page = self.cleaned_data.get("per_page") or proj_settings.get("PAGINATION.media_items", 10)
         page = self.cleaned_data.get("page")
         return Paginator(qs, per_page).get_page(page)
 
@@ -118,5 +118,5 @@ class ListMediaItemsQueue(ListMediaItems):
             F("priority") * 7 + 3/(Ln(Cast(days, FloatField())+2) * 10),
             output_field=FloatField()
         ))
-        qs = qs.order_by("-score", "-created_at", "-id")[:proj_settings.PAGINATION.queue_N]
+        qs = qs.order_by("-score", "-created_at", "-id")[:proj_settings.get("PAGINATION.queue_N", 5)]
         return qs
