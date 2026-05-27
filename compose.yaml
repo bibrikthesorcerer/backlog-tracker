@@ -25,7 +25,7 @@ services:
   web:
     <<: *backlog-app-base
     ports:
-      - "6855:8000"
+      - "${BACKLOG_PORT:-8000}:8000"
 
   worker:
     <<: *backlog-app-base
