@@ -13,7 +13,7 @@ class ShowMediaItemTest(APITestCase):
         super().setUpClass()
         cls.other_user = UserFactory.create()
         cls.media_items = MediaItemFactory.create_batch(
-            proj_settings.PAGINATION.media_items, 
+            proj_settings.get("PAGINATION.media_items", 10), 
         )
         cls.mi_test = cls.media_items[0]
         cls.mi_owner = cls.mi_test.user
@@ -72,7 +72,7 @@ class UpdateMediaItemTest(APITestCase):
         super().setUpClass()
         cls.other_user = UserFactory.create()
         cls.media_items = MediaItemFactory.create_batch(
-            proj_settings.PAGINATION.media_items, 
+            proj_settings.get("PAGINATION.media_items", 10), 
         )
         cls.mi_test = cls.media_items[0] #NOTE: potential state bleeding. might move to setUp with refresh_from_db()
         cls.mi_owner = cls.mi_test.user
@@ -160,7 +160,7 @@ class DeleteMediaItemTest(APITestCase):
         super().setUpClass()
         cls.other_user = UserFactory.create()
         cls.media_items = MediaItemFactory.create_batch(
-            proj_settings.PAGINATION.media_items, # decoys
+            proj_settings.get("PAGINATION.media_items", 10), # decoys
         )
         
     def setUp(self):

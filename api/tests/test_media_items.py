@@ -9,7 +9,7 @@ from config import proj_settings
 
 class ListMediaItemsTest(APITestCase):
     NUM_PAGES = 3
-    MEDIA_ITEMS_NUM = NUM_PAGES*proj_settings.PAGINATION.media_items # 3 pages of items
+    MEDIA_ITEMS_NUM = NUM_PAGES*proj_settings.get("PAGINATION.media_items", 10) # 3 pages of items
 
     @classmethod
     def setUpClass(cls):
@@ -35,7 +35,7 @@ class ListMediaItemsTest(APITestCase):
             msg=f"Unexpected response: {response.data}"
         )
         self.assertEqual(response.data['total_count'], len(self.media_items))
-        self.assertEqual(len(response.data['objects']), proj_settings.PAGINATION.media_items)
+        self.assertEqual(len(response.data['objects']), proj_settings.get("PAGINATION.media_items", 10))
 
     def test_get_media_items_some_params_200(self):
         PAGE = 2

@@ -6,18 +6,19 @@
 
 Track movies, books, games, and other media through a clean lifecycle system.
 
-![Python](https://img.shields.io/badge/python-3.x-blue?style=for-the-badge&logo=python)
-![Django](https://img.shields.io/badge/django-backend-092E20?style=for-the-badge&logo=django)
-![PostgreSQL](https://img.shields.io/badge/postgresql-database-316192?style=for-the-badge&logo=postgresql)
-![Celery](https://img.shields.io/badge/celery-task_queue-37814A?style=for-the-badge&logo=celery)
-![Redis](https://img.shields.io/badge/redis-broker-DC382D?style=for-the-badge&logo=redis)
+![Python](https://img.shields.io/badge/python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/django-5.2-092E20?style=for-the-badge&logo=django)
+![PostgreSQL](https://img.shields.io/badge/postgresql-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-8-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Celery](https://img.shields.io/badge/celery-5.6-37814A?style=for-the-badge&logo=celery&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/docker_compose-orchestrated-1D63ED?style=for-the-badge&logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-
 </div>
 
 ---
 
-## Overview
+# Overview
 
 Most people have a growing list of media they want to consume someday:
 
@@ -28,6 +29,8 @@ Most people have a growing list of media they want to consume someday:
 - Anything else worth experiencing
 
 **Backlog** helps users organize that chaos.
+
+It provides simple tooling to help users track, rate and reflect on different media they want to consume.
 
 Users can move content through a simple lifecycle:
 
@@ -41,13 +44,13 @@ The platform also periodically sends curation emails to encourage users to final
 
 # Features
 
-- 📦 Media backlog management
-- 🔄 FSM-powered lifecycle transitions
-- 🔐 User authentication via Django sessions & cookies
-- ⚡ REST API
+- 📦 Track, rate and reflect on movies, books, games and other media in one place
+- 🔄 FSM-powered lifecycle management for media content
+- 🔐 Session-based authentication with Django
+- ⚡ REST API for integration with frontend clients
 - 📨 Periodic recommendation emails using Celery
 - 🗄 PostgreSQL persistence
-- 🛠 Infrastructure automation with Ansible
+- 🐳 Fully containerized development and deployment workflow
 - 🧪 Local development powered by Poetry
 
 ---
@@ -56,12 +59,12 @@ The platform also periodically sends curation emails to encourage users to final
 
 | Layer | Technology |
 |---|---|
-| Backend | Python + Django |
+| Backend | Python + Django + DRF |
 | Database | PostgreSQL |
 | Async Tasks | Celery |
 | Message Broker | Redis |
 | Dependency Management | Poetry |
-| Infrastructure | Ansible |
+| Containerization | Docker + Docker Compose |
 
 ---
 
@@ -70,22 +73,116 @@ The platform also periodically sends curation emails to encourage users to final
 ## Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/bibrikthesorcerer/backlog-tracker.git
 cd backlog
 ```
 
 ---
 
-# 💻 Local Development
+
+# 🔐 Configuration
+
+Backlog uses [Dynaconf](https://dynaconf.com/) for configuration management.
+
+The project configuration is composed of multiple layers:
+
+- `settings.toml`  
+  Stores project-level settings such as logging configuration, pagination, and application defaults.
+
+- `.secrets.toml`  
+  Stores sensitive data such as the Django secret key, email credentials, and database credentials.
+
+- `.env` / environment variables  
+  Used to override configuration values dynamically. Primarily used in Docker and Docker Compose environments.
+
+- `settings.local.toml` *(optional)*  
+  Local machine-specific overrides written in TOML syntax.
+
+Configuration values are loaded in layers, allowing local and environment-specific overrides without modifying the base project configuration. Environment variables take highest priority.
+
+## Environments
+
+Backlog defines three Dynaconf environments:
+
+- `default` — shared base configuration
+- `development` — local development settings
+- `production` — production-ready overrides
+
+The active environment can be selected using the `BL_MODE` environment variable.
+
+## Initial configuration
+
+Create a local secrets file from the example template:
+
+```bash
+cp example.secrets.toml .secrets.toml
+```
+
+### Docker Compose Users
+
+> [!IMPORTANT]
+> If you are using Docker Compose, the only required variables are:
+>
+> - `BL_DJANGO__SECRET_KEY`
+> - `POSTGRES_PASSWORD`
+>
+> Create a `.env` file:
+>
+> ```env
+> POSTGRES_PASSWORD=1234
+> BL_DJANGO__SECRET_KEY=your_secret_key
+> ```
+>
+>Everything else is configured automatically through container environment variables.
+
+### Local Development Users
+
+For local non-Docker setups, additionally configure:
+
+- PostgreSQL credentials
+- Celery's connection settings
+- Email credentials
+
+---
+
+# 🐳 Docker Setup (Recommended)
 
 ## Requirements
 
-- [Python](https://www.python.org/)
-- [Poetry](https://python-poetry.org/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [Redis](https://redis.io/)
+- Docker
+- Docker Compose
+
+## Start Services
+
+```bash
+docker compose up
+```
+
+This starts:
+
+- `web` — Django application
+- `postgres` — PostgreSQL database
+- `redis` — Celery broker/cache
+- `worker` — Celery worker
+- `beat` — Celery Beat scheduler
+
+The application then will become available at:
+
+```text
+http://localhost:8000
+```
 
 ---
+
+<details>
+<summary><h1>💻 Local Development</h1></summary>
+
+## Requirements
+
+- Python
+- Poetry
+- PostgreSQL
+- Redis
 
 ## Install Dependencies
 
@@ -93,81 +190,63 @@ cd backlog
 poetry install
 ```
 
----
-
-## Configure Environment
-
-Backlog uses [Dynaconf](https://dynaconf.com) with `.secrets.toml`.
-
-An example configuration file is included:
+## Activate Environment
 
 ```bash
-example.secrets.toml
+$(poetry env activate)
 ```
-
-Create your local configuration:
-
-```bash
-cp example.secrets.toml .secrets.toml
-```
-
-Update the values as needed.
-
----
 
 ## Run Development Server
 
 ```bash
-$(poetry env activate)
 python manage.py runserver
 ```
 
----
+</details>
 
-# 🧰 Ansible Setup
+<details>
+<summary><h1>🧰 Ansible Setup</h1></summary>
 
 You can bootstrap the project locally using Ansible
 
-First off, create `inventory.ini` with host nodes.  
-Then create a `vault/postgres_password.yml` if you intend to use PostgreSQL locally on host node.  
+First off, create `deploy/inventory.ini`, and populate it with host nodes.  
+
+Then create a `deploy/vault/postgres_password.yml` if you intend to use PostgreSQL locally on host node.  
 It should contain `postgres_admin_password` and `postgres_password`, which will be used to manage `postgres` user and project-specific DB user.
 ```yml
 postgres_admin_password: PASS
 postgres_password: PASS
 ```
-Finally, encrypt it using ansible vault:
+Then encrypt vault using `ansible-vault` command:
 
 ```bash
 ansible-vault encrypt deploy/vault/postgres_password.yml
 ```
 
-Then you can run 
+Then run playbook:
 
 ```bash
 ansible-playbook -i deploy/inventory.ini deploy/site.yml --ask-vault-pass
 ```
-*Or store vault password in a file and point it to Ansible:*
+Or use a vault password file:
 ```bash
 ansible-playbook -i deploy/inventory.ini deploy/site.yml --vault-password-file .vault_pass
 ```
 
 ---
+</details>
 
-# 📡 API Documentation
-
-Swagger UI is available at:
-
-```text
-/api/schema/swagger-ui
-```
-
----
 
 # 📘 Usage
 
-Backlog currently uses Django session authentication with cookies + CSRF protection.
+Backlog currently uses Django session authentication with cookie-based sessions and CSRF protection.
 
-Typical API flow:
+You can interact with the application through:
+  - Django REST Framework's Browsable API
+  - `curl`
+  - any other HTTP client of your choice
+
+Typical workflow:
 
 1. Register a user
 2. Login to obtain:
@@ -207,9 +286,12 @@ After login:
 
 ---
 
-## 3️⃣ Create Media Item
+## 3️⃣ Make Authenticated Requests (Create a Media Item)
 
-Make requests. CSRF token must be passed manually to `X-CSRFToken` HTTP header:
+Authenticated requests require both:
+  - session-cookie
+  - `X-CSRFToken` header
+
 ```bash
 curl -X POST http://localhost:8000/media_items/ \
   --json '{
@@ -227,37 +309,33 @@ curl -X POST http://localhost:8000/media_items/ \
 Backlog uses:
 
 - Django session authentication
-- Cookie-based sessions
+- cookie-based sessions
 - CSRF protection for state-changing requests
 
 Authenticated requests require:
 
-- Valid session cookie
-- `X-CSRFToken` header
+- valid session cookie
+- valid `X-CSRFToken` header
+
+## 📚 API Documentation
+
+- Swagger UI: `http://localhost:8000/api/schema/swagger-ui/`
+- OpenAPI schema: `http://localhost:8000/api/schema/`
 
 ---
 
-# 🔄 Media Lifecycle
+# 📨 Curation Letters
 
-Backlog uses finite-state transitions to track content progress:
+Periodic Celery tasks send users personalized daily email curations based on their backlog.
 
-```text
-Wishlist
-   ↓
-In Progress
-   ├──→ Completed
-   └──→ Dropped
-```
+These emails highlight:
 
----
-
-# 📨 Recommendation System
-
-Periodic Celery tasks send users daily email curations based on their backlog.
+- media users are highly interested in but haven't started yet
+- media they already started but have not finished
 
 The goal is simple:
 
-> Help users actually consume the media they keep saving for later.
+> Reduce the gap between collecting media and actually experiencing it.
 
 ---
 

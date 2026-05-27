@@ -1,0 +1,53 @@
+[default.postgres]
+name = "backlog"
+user = "backlog"
+host = "localhost"
+port = 5432
+
+[default.pagination]
+media_items = 10
+queue_N = 5
+
+[default.django]
+debug = false
+allowed_hosts = ["localhost"]
+cookies_secure = true
+
+[default.logging]
+logging_enabled = true
+log_level = "INFO"
+django_log_level = "INFO"
+db_log_level = "WARNING"
+
+[default.email]
+host = "localhost"
+port = 8025
+use_tls = false
+default_from_email = "from@backlog.co"
+
+[default.celery]
+broker_url = "redis://localhost:6379/0"
+result_backend = "redis://localhost:6379/1"
+
+#
+#   DEVELOPMENT env
+#
+
+[development.django]
+debug = true
+allowed_hosts = ["*"]
+cookies_secure = false
+
+[development.logging]
+db_log_level = "DEBUG"
+
+#
+# PRODUCTION env
+#
+
+[production.django]
+debug = false
+cookies_secure = true
+
+[production.logging]
+db_log_level = "WARNING"

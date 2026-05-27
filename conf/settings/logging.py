@@ -5,7 +5,7 @@ from conf.settings.django import BASE_DIR
 LOG_REQUESTS = True
 LOG_USER_ATTRIBUTE = "username"
 NO_REQUEST_ID = "no ID"
-LOGGING_ENABLED = proj_settings.LOGGING.logging_enabled
+LOGGING_ENABLED = proj_settings.get("LOGGING.logging_enabled", True)
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(parents=True, exist_ok=True) #
 if LOGGING_ENABLED:
@@ -32,7 +32,7 @@ if LOGGING_ENABLED:
         },
         'handlers': {
             'console': {
-                'level': proj_settings.LOGGING.log_level,
+                'level': proj_settings.get("LOGGING.log_level", "INFO"),
                 'filters': ['request_id'],
                 'formatter': 'rich',
                 # rich handler settings
@@ -42,7 +42,7 @@ if LOGGING_ENABLED:
                 'markup': True
             },
             'file': {
-                'level': proj_settings.LOGGING.log_level,
+                'level': proj_settings.get("LOGGING.log_level", "INFO"),
                 'filters': ['request_id'],
                 'formatter': 'standart',
                 'class': 'logging.FileHandler',
@@ -52,13 +52,13 @@ if LOGGING_ENABLED:
         'loggers': {
             'django': {
                 'handlers': ['console', 'file'],
-                'level': proj_settings.LOGGING.django_log_level or proj_settings.LOGGING.log_level,
+                'level': proj_settings.get("LOGGING.django_log_level", "INFO"),
                 'propagate': True
             },
             'django.db.backends': {
                 'handlers': ['console', 'file'],
                 'filters': ['require_debug_true'],
-                'level': proj_settings.LOGGING.db_log_level or proj_settings.LOGGING.log_level,
+                'level': proj_settings.get("LOGGING.db_log_level", "WARNING"),
                 'propagate': False
             },
         },

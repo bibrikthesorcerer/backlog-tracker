@@ -1,61 +1,13 @@
 from dynaconf import Dynaconf
-from typing import cast
 
-
-class _Postgres:
-    name: str
-    user: str
-    password: str
-    host: str
-    port: str
-
-
-class _Pagination:
-    media_items: int
-    queue_N: int
-    
-
-class _Django:
-    secret_key: str
-    debug: bool
-    allowed_hosts: list
-    cookies_secure: bool
-
-
-class _Logging:
-    logging_enabled: bool
-    log_level: str
-    django_log_level: str
-    db_log_level: str
-
-
-class _Email:
-    host: str
-    port: int
-    use_tls: bool
-    host_user: str
-    host_password: str
-    default_from_email: str
-
-    
-class _Celery:
-    broker_url: str
-    result_backend: str
-
-
-class _Settings:
-    POSTGRES: _Postgres
-    PAGINATION: _Pagination
-    DJANGO: _Django
-    LOGGING: _Logging
-    EMAIL: _Email
-    CELERY: _Celery
-
-
-proj_settings = cast(_Settings, Dynaconf(
-    envvar_prefix="DYNACONF",
-    settings_files=['.secrets.toml'],
-))
-
-# `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
-# `settings_files` = Load these files in the order.
+proj_settings = Dynaconf(
+    envvar_prefix="BL",
+    env_switcher="BL_MODE",
+    settings_files=[
+        "settings.toml",
+        ".secrets.toml",
+        "settings.local.toml",
+    ],
+    load_dotenv=True,
+    environments=True,
+)
